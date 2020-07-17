@@ -11,6 +11,7 @@ const (
 	layout = "2006-01-02T15:04:05.123Z"
 )
 
+// Event contains the whole of the CoT message
 type Event struct {
 	XMLName   xml.Name      `xml:"event"`
 	Version   string        `xml:"version,attr"`
@@ -25,6 +26,7 @@ type Event struct {
 	DfltStale time.Duration `xml:"-"`
 }
 
+// Returns an event that keeps state of minimal info, normally dont use this event directly
 func NewDefaultEvent(call string, tv *Takv) *Event {
 	var takv *Takv
 	if tv != nil {
@@ -44,6 +46,7 @@ func NewDefaultEvent(call string, tv *Takv) *Event {
 		Uid:       uuid.New().String(),
 		Type:      "a-f-G-U-C",
 		How:       "m-g",
+		Point:     &Point{},
 		Detail: &Detail{
 			Takv: takv,
 			Contact: &Contact{
@@ -60,6 +63,7 @@ func NewDefaultEvent(call string, tv *Takv) *Event {
 	return evt
 }
 
+// UpdateSelf returns a copy of the base event with a few fields updated, primary use case is to update your position
 func (e *Event) UpdateSelf(pt *Point, tr *Track) *Event {
 	eCpy := *e
 	eCpy.Point = pt
@@ -74,6 +78,7 @@ func (e *Event) UpdateSelf(pt *Point, tr *Track) *Event {
 	return &eCpy
 }
 
+// Point in CoT
 type Point struct {
 	XMLName xml.Name `xml:"point"`
 	Lat     float64  `xml:"lat,attr"`
@@ -83,6 +88,7 @@ type Point struct {
 	LE      float64  `xml:"le,attr"`
 }
 
+// Detail
 type Detail struct {
 	XMLName xml.Name `xml:"detail"`
 	Takv    *Takv    `xml:"takv"`
@@ -94,6 +100,7 @@ type Detail struct {
 	Track   *Track   `xml:"track"`
 }
 
+// Takv
 type Takv struct {
 	XMLName  xml.Name `xml:"takv"`
 	OS       string   `xml:"os,attr"`
@@ -102,40 +109,47 @@ type Takv struct {
 	Platform string   `xml:"platform,attr"`
 }
 
+// Contact
 type Contact struct {
 	XMLName  xml.Name `xml:"contact"`
 	Endpoint string   `xml:"endpoint,attr"`
 	Callsign string   `xml:"callsign,attr"`
 }
 
+// UID
 type UID struct {
 	XMLName xml.Name `xml:"uid"`
 	Droid   string   `xml:"Droid,attr"`
 }
 
+// Loc is the precisionlocation
 type Loc struct {
 	XMLName xml.Name `xml:"precisionlocation"`
 	AltSrc  string   `xml:"altsrc,attr"`
 	Geo     string   `xml:"geopointsrc,attr"`
 }
 
+// Group
 type Group struct {
 	XMLName xml.Name `xml:"__group"`
 	Role    string   `xml:"role,attr"`
 	Name    string   `xml:"name,attr"`
 }
 
+// Status
 type Status struct {
 	XMLName xml.Name `xml:"status"`
 	Battery int      `xml:"battery,attr"`
 }
 
+// Track
 type Track struct {
 	XMLName xml.Name `xml:"track"`
 	Course  float64  `xml:"course,attr"`
 	Speed   float64  `xml:"speed,attr"`
 }
 
+// Gets the current zulu time in mil format plus any added duration for future time
 func getTime(d time.Duration) string {
 	t := time.Now()
 	if d != 0 {
@@ -144,6 +158,7 @@ func getTime(d time.Duration) string {
 	return t.UTC().Format(layout)
 }
 
+// MarshallEvent into XML bytes
 func MarshallEvent(evt *Event) ([]byte, error) {
 	str, err := xml.Marshal(evt)
 	if err != nil {

@@ -30,6 +30,7 @@ var _ = Describe("XML CoT", func() {
 			}
 			up := evt.UpdateSelf(pt, tr)
 			Expect(up.Point.Lat).Should(Equal(expLat))
+			Expect(up.Point.Lat).ShouldNot(Equal(evt.Point.Lat)) // Make sure its a copy
 			Expect(up.Detail.Track.Course).Should(Equal(expCourse))
 		})
 	})

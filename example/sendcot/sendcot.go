@@ -22,7 +22,7 @@ var (
 	flgLat  = flag.Float64("lat", 0, "lattitude")
 	flgLon  = flag.Float64("lon", 0, "longitude")
 	flgHae  = flag.Float64("hae", 0, "hae altitude")
-	flgNum  = flag.Int("num", 20, "Number of targets")
+	flgNum  = flag.Int("num", 20, "number of targets")
 )
 
 func main() {
@@ -38,11 +38,13 @@ func main() {
 	if err != nil {
 		log.Fatal().Err(err).Msg("failed to make UDP conn")
 	}
+
 	generateCots(*flgName, *flgLat, *flgLon, *flgHae, *flgNum, conn)
 	conn.Close()
 	log.Info().Msg("all done")
 }
 
+// Create random target around given coord
 func generateCots(basename string, lat, lon, hae float64, num int, conn *net.UDPConn) {
 	rand.Seed(time.Now().UnixNano())
 	for i := 0; i < num; i++ {
