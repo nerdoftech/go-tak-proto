@@ -11,23 +11,13 @@ const (
 	layout = "2006-01-02T15:04:05.123Z"
 )
 
-// Event contains the whole of the CoT message
-type Event struct {
-	XMLName   xml.Name      `xml:"event"`
-	Version   string        `xml:"version,attr"`
-	Uid       string        `xml:"uid,attr"`
-	Type      string        `xml:"type,attr"`
-	Time      string        `xml:"time,attr"`
-	Start     string        `xml:"start,attr"`
-	Stale     string        `xml:"stale,attr"`
-	How       string        `xml:"how,attr"`
-	Point     *Point        `xml:"point"`
-	Detail    *Detail       `xml:"detail"`
-	DfltStale time.Duration `xml:"-"`
+type CotXML struct {
+	Event     *Event
+	DfltStale time.Duration
 }
 
-// Returns an event that keeps state of minimal info, normally dont use this event directly
-func NewDefaultEvent(call string, tv *Takv) *Event {
+// NewCotXML returns an event that keeps state of minimal info, normally dont use the event directly
+func NewCotXML(call string, tv *Takv) *CotXML {
 	var takv *Takv
 	if tv != nil {
 		takv = tv
@@ -41,12 +31,11 @@ func NewDefaultEvent(call string, tv *Takv) *Event {
 	}
 
 	evt := &Event{
-		DfltStale: 5 * time.Minute,
-		Version:   "2.0",
-		Uid:       uuid.New().String(),
-		Type:      "a-f-G-U-C",
-		How:       "m-g",
-		Point:     &Point{},
+		Version: "2.0",
+		Uid:     uuid.New().String(),
+		Type:    "a-f-G-U-C",
+		How:     "m-g",
+		Point:   &Point{},
 		Detail: &Detail{
 			Takv: takv,
 			Contact: &Contact{
@@ -60,22 +49,48 @@ func NewDefaultEvent(call string, tv *Takv) *Event {
 			Track:  &Track{},
 		},
 	}
-	return evt
+	return &CotXML{
+		DfltStale: 5 * time.Minute,
+		Event:     evt,
+	}
 }
 
-// UpdateSelf returns a copy of the base event with a few fields updated, primary use case is to update your position
-func (e *Event) UpdateSelf(pt *Point, tr *Track) *Event {
-	eCpy := *e
-	eCpy.Point = pt
+// UpdateSelfEvent returns a copy of the base event with a few fields updated, primary use case is to update your position
+func (c *CotXML) UpdateSelfEvent(pt *Point, tr *Track) *Event {
+	evtCpy := *c.Event
+	evtCpy.Point = pt
 	if tr != nil {
-		eCpy.Detail.Track = tr
+		evtCpy.Detail.Track = tr
 	}
 	now := getTime(0)
-	stale := getTime(eCpy.DfltStale)
-	eCpy.Time = now
-	eCpy.Start = now
-	eCpy.Stale = stale
-	return &eCpy
+	stale := getTime(c.DfltStale)
+	evtCpy.Time = now
+	evtCpy.Start = now
+	evtCpy.Stale = stale
+	return &evtCpy
+}
+
+// Event contains the whole of the CoT message
+type Event struct {
+	XMLName xml.Name `xml:"event"`
+	Version string   `xml:"version,attr"`
+	Uid     string   `xml:"uid,attr"`
+	Type    string   `xml:"type,attr"`
+	Time    string   `xml:"time,attr"`
+	Start   string   `xml:"start,attr"`
+	Stale   string   `xml:"stale,attr"`
+	How     string   `xml:"how,attr"`
+	Point   *Point   `xml:"point"`
+	Detail  *Detail  `xml:"detail"`
+}
+
+// MarshallEvent into XML bytes
+func (e *Event) MarshallEvent() ([]byte, error) {
+	str, err := xml.Marshal(e)
+	if err != nil {
+		return nil, err
+	}
+	return str, nil
 }
 
 // Point in CoT
@@ -156,13 +171,4 @@ func getTime(d time.Duration) string {
 		t = t.Add(d)
 	}
 	return t.UTC().Format(layout)
-}
-
-// MarshallEvent into XML bytes
-func MarshallEvent(evt *Event) ([]byte, error) {
-	str, err := xml.Marshal(evt)
-	if err != nil {
-		return nil, err
-	}
-	return str, nil
 }

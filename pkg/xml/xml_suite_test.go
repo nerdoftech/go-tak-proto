@@ -15,11 +15,11 @@ func TestXml(t *testing.T) {
 var _ = Describe("XML CoT", func() {
 	Context("Event", func() {
 		It("NewDefaultEvent work", func() {
-			evt := NewDefaultEvent("Joe1", nil)
-			Expect(evt.Detail.UID.Droid).Should(Equal("Joe1"))
+			cot := NewCotXML("Joe1", nil)
+			Expect(cot.Event.Detail.UID.Droid).Should(Equal("Joe1"))
 		})
-		It("UpdateSelf should work", func() {
-			evt := NewDefaultEvent("Joe1", nil)
+		It("UpdateSelf/Marshall should work", func() {
+			cot := NewCotXML("Joe1", nil)
 			expLat := 41.0
 			expCourse := 123.4
 			pt := &Point{
@@ -28,16 +28,12 @@ var _ = Describe("XML CoT", func() {
 			tr := &Track{
 				Course: expCourse,
 			}
-			up := evt.UpdateSelf(pt, tr)
+			up := cot.UpdateSelfEvent(pt, tr)
 			Expect(up.Point.Lat).Should(Equal(expLat))
-			Expect(up.Point.Lat).ShouldNot(Equal(evt.Point.Lat)) // Make sure its a copy
+			Expect(up.Point.Lat).ShouldNot(Equal(cot.Event.Point.Lat)) // Make sure its a copy
 			Expect(up.Detail.Track.Course).Should(Equal(expCourse))
-		})
-	})
-	Context("MarshallEvent", func() {
-		It("should work", func() {
-			evt := NewDefaultEvent("Joe1", nil)
-			_, err := MarshallEvent(evt)
+
+			_, err := up.MarshallEvent()
 			Expect(err).Should(BeNil())
 		})
 	})

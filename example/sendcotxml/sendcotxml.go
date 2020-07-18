@@ -49,7 +49,7 @@ func generateCots(basename string, lat, lon, hae float64, num int, conn *net.UDP
 	rand.Seed(time.Now().UnixNano())
 	for i := 0; i < num; i++ {
 		name := fmt.Sprintf("%s-%d", basename, i)
-		evt := cot.NewDefaultEvent(name, nil)
+		c := cot.NewCotXML(name, nil)
 		pt := &cot.Point{
 			Lat:  lat + float64(rand.Int()%50-25)/100,
 			Long: lon + float64(rand.Int()%50-25)/100,
@@ -61,7 +61,7 @@ func generateCots(basename string, lat, lon, hae float64, num int, conn *net.UDP
 			Course: float64(rand.Int() % 360),
 			Speed:  float64(rand.Int() % 150),
 		}
-		b, err := cot.MarshallEvent(evt.UpdateSelf(pt, tr))
+		b, err := c.UpdateSelfEvent(pt, tr).MarshallEvent()
 		if err != nil {
 			log.Fatal().Err(err).Msg("failed to marshall CoT")
 		}
